@@ -1,0 +1,7 @@
+ArduinoBusSlave	KEYWORD1
+ArduinoBusMaster	KEYWORD1
+begin			KEYWORD2
+pinMode		KEYWORD2
+digitalWrite	KEYWORD2
+digitalRead		KEYWORD2
+analogWrite		KEYWORD2
