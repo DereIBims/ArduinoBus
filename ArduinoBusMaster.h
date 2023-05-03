@@ -14,7 +14,7 @@
 class ArduinoBusMaster {
 public:
 
-	ArduinoBusMaster(bool SerialDebug);
+	ArduinoBusMaster(bool SerialDebug=false);
 	void begin(byte address);
 	bool pinMode(byte pin, byte mode);
 	bool digitalWrite(byte pin, byte mode);
@@ -23,10 +23,13 @@ public:
 
 private:
 	void SendRequest(char* writebuffer);
-	void printbuf(char* buffer, String caption);
+	void printbuf(char* buffer, const char* caption);
+	bool CheckAddress();
 	byte address;
 	bool SerialDebug;
+	bool reachable = false;
 };
+
 
 
 #endif

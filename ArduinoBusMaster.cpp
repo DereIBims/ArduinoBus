@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include <Wire.h>
 
+bool initialized = false;
 
 ArduinoBusMaster::ArduinoBusMaster(bool SerialDebug) {
 	this->SerialDebug = SerialDebug;
@@ -9,16 +10,34 @@ ArduinoBusMaster::ArduinoBusMaster(bool SerialDebug) {
 
 void ArduinoBusMaster::begin(byte address) {
 	this->address = address;
-	Wire.begin();
+	if (!initialized) {
+		Wire.begin();
+		if (this->SerialDebug) {
+			Serial.println("Call:");
+			Serial.println("Wire.begin()");
+			Serial.print("for address 0x");
+			Serial.println(this->address);
+			Serial.println();
+		}
+		initialized = true;
+	}
+	else {
+		Serial.println("Function: ");
+		Serial.println("Wire.begin()");
+		Serial.println("was already called!");
+		Serial.println();
+	}
+	this->reachable = CheckAddress();
 }
 
 bool ArduinoBusMaster::pinMode(byte pin, byte mode) {
+	if (!this->reachable) return false;
 	char writebuffer[] = { 0x01, pin, mode };
 	SendRequest(writebuffer);
 	if (Wire.available()) {
 		char receivebuffer[3];
 		Wire.readBytes(receivebuffer, 3);
-		printbuf(receivebuffer, "Response:");
+		printbuf(receivebuffer, "Response");
 		if (memcmp(writebuffer, receivebuffer, 3) == 0) {
 			return true;
 		}
@@ -34,6 +53,7 @@ bool ArduinoBusMaster::pinMode(byte pin, byte mode) {
 }
 
 bool ArduinoBusMaster::digitalWrite(byte pin, byte mode) {
+	if (!this->reachable) return false;
 	char writebuffer[] = { 0x03, pin, mode };
 	SendRequest(writebuffer);
 
@@ -48,6 +68,7 @@ bool ArduinoBusMaster::digitalWrite(byte pin, byte mode) {
 }
 
 bool ArduinoBusMaster::digitalRead(byte pin) {
+	if (!this->reachable) return false;
 	char writebuffer[] = { 0x02, pin, 0x00 };
 	SendRequest(writebuffer);
 
@@ -62,6 +83,7 @@ bool ArduinoBusMaster::digitalRead(byte pin) {
 }
 
 bool ArduinoBusMaster::analogWrite(byte pin, byte dutycycle) {
+	if (!this->reachable) return false;
 	char writebuffer[] = { 0x04, pin, dutycycle };
 	SendRequest(writebuffer);
 
@@ -87,9 +109,16 @@ void ArduinoBusMaster::SendRequest(char* writebuffer) {
 	printbuf(writebuffer, "Request");
 }
 
-void ArduinoBusMaster::printbuf(char* buffer, String caption) {
+void ArduinoBusMaster::printbuf(char* buffer, const char* caption) {
 	if (this->SerialDebug) {
-		Serial.println(caption);
+		Serial.print(caption);
+		if (caption == "Request") {
+			Serial.print(" for address: 0x");
+		}
+		else {
+			Serial.print(" from address: 0x");
+		}
+		Serial.println(this->address);
 		Serial.print("Command: 0x");
 		Serial.println(buffer[0], HEX);
 		Serial.print("Pin: 0x");
@@ -97,5 +126,28 @@ void ArduinoBusMaster::printbuf(char* buffer, String caption) {
 		Serial.print("Data: 0x");
 		Serial.println(buffer[2], HEX);
 		Serial.println();
+	}
+}
+
+bool ArduinoBusMaster::CheckAddress() {
+	Wire.beginTransmission(this->address);
+	if (Wire.endTransmission() == 0) {
+		if (this->SerialDebug) {
+			Serial.print("Adress: 0x");
+			Serial.println(this->address);
+			Serial.println("is rechable -> all okay");
+			Serial.println();
+		}
+		return true;
+	}
+	else {
+		if (this->SerialDebug) {
+			Serial.print("Adress: 0x");
+			Serial.println(this->address);
+			Serial.println("is not reachable!");
+			Serial.println("Functions for this address are ignored!");
+			Serial.println();
+		}
+		return false;
 	}
 }
