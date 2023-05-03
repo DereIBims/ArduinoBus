@@ -15,7 +15,7 @@ If you use slower rates, the SerialDebug output will use so much time, that the 
 ## Usage/Examples (comments will be added to the code in /examples)
 ### Slave
 
-```cpp
+```c++
 #include <ArduinoBusSlave.h>
 
 ArduinoBusSlave Test(true);
@@ -34,7 +34,7 @@ void loop() {
 
 ### Master
 
-```cpp
+```c++
 #include "ArduinoBusMaster.h"
 ArduinoBusMaster TestSlave(true);
 ArduinoBusMaster Test2(true);
